@@ -241,101 +241,86 @@ function Netro65UI:Notify(props)
 end
 
 --// ------------------------------
---// VIP SYSTEM IMPLEMENTATION
+--// INTERNAL UTILS FOR SYSTEM
 --// ------------------------------
 
-function Netro65UI:InitVIP(rawUrl)
-    spawn(function()
-        local success, result = pcall(function()
-            return game:HttpGet(rawUrl)
-        end)
+local function CheckIDInList(content, userId)
+    local idString = tostring(userId)
+    local found = false
 
-        if not success then
-            warn("Failed to fetch VIP list: " .. tostring(result))
-            return
-        end
-
-        local content = result
-        local myUserId = tostring(LocalPlayer.UserId)
-        local isVipFound = false
-
-        -- Cek apakah format JSON
-        if content:match("^%s*%[") then
-            local jsonSuccess, jsonTable = pcall(function() return HttpService:JSONDecode(content) end)
-            if jsonSuccess and type(jsonTable) == "table" then
-                for _, id in pairs(jsonTable) do
-                    if tostring(id) == myUserId then
-                        isVipFound = true
-                        break
-                    end
-                end
-            end
-        else
-            -- Parsing TXT
-            for id in content:gmatch("%d+") do
-                if id == myUserId then
-                    isVipFound = true
+    -- Cek jika format JSON
+    if content:match("^%s*%[") or content:match("^%s*{") then
+        local success, json = pcall(function() return HttpService:JSONDecode(content) end)
+        if success and type(json) == "table" then
+            for _, v in pairs(json) do
+                if tostring(v) == idString then
+                    found = true
                     break
                 end
             end
         end
-
-        Netro65UI.IsVIP = isVipFound
-        if isVipFound then
-            Netro65UI:Notify({Title = "VIP System", Content = "Welcome back, VIP User!", Type = "Success", Duration = 5})
+    else
+        -- Cek jika format TXT (Baris per baris atau dipisah koma)
+        for line in content:gmatch("[^%s,]+") do
+            if line == idString then
+                found = true
+                break
+            end
         end
-    end)
+    end
+    return found
 end
 
 --// ------------------------------
---// KEY SYSTEM IMPLEMENTATION
+--// KEY SYSTEM (MODULAR)
 --// ------------------------------
 
-function Netro65UI:LoadKeySystem(props)
+function Netro65UI:TriggerKeySystem(settings, onComplete)
     local KeySettings = {
-        KeyURL = props.KeyURL or "",
-        GetKeyLink = props.GetKeyLink or "https://google.com",
-        Title = props.Title or "Key System",
-        Subtitle = props.Subtitle or "Support us to continue!",
-        Callback = props.Callback or function() end
+        KeyURL = settings.KeyURL or "",
+        GetKeyLink = settings.KeyLink or "https://google.com",
+        Title = settings.Title or "Key System",
+        Subtitle = "Support us by getting a key!",
+        Callback = onComplete or function() end
     }
 
     local KeyFrame = Utility:Create("Frame", {
         Name = "KeySystem", Parent = ScreenGui, BackgroundColor3 = Netro65UI.Theme.Main,
-        Size = UDim2.new(0, 350, 0, 190), Position = UDim2.new(0.5, -175, 0.5, -95),
-        BorderSizePixel = 0, ZIndex = 1000
+        Size = UDim2.new(0, 350, 0, 200), Position = UDim2.new(0.5, -175, 0.5, -100),
+        BorderSizePixel = 0, ZIndex = 2000, BackgroundTransparency = 0.05
     }, {
         Utility:Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
         Utility:Create("UIStroke", {Color = Netro65UI.Theme.Outline, Thickness = 2}),
         -- Header
-        Utility:Create("TextLabel", {Text = KeySettings.Title, Font = Netro65UI.Theme.FontBold, TextSize = 18, TextColor3 = Netro65UI.Theme.Text, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 30), Position = UDim2.new(0, 0, 0, 15)}),
-        Utility:Create("TextLabel", {Text = KeySettings.Subtitle, Font = Netro65UI.Theme.FontMain, TextSize = 13, TextColor3 = Netro65UI.Theme.TextDark, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 20), Position = UDim2.new(0, 0, 0, 40)}),
-        -- Close Button
+        Utility:Create("TextLabel", {Text = KeySettings.Title, Font = Netro65UI.Theme.FontBold, TextSize = 20, TextColor3 = Netro65UI.Theme.Text, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 30), Position = UDim2.new(0, 0, 0, 15)}),
+        Utility:Create("TextLabel", {Text = KeySettings.Subtitle, Font = Netro65UI.Theme.FontMain, TextSize = 13, TextColor3 = Netro65UI.Theme.TextDark, BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 20), Position = UDim2.new(0, 0, 0, 45)}),
+        -- Close Button (Optional, usually Key Systems enforce completion)
         Utility:Create("TextButton", {Text = "X", Font = Netro65UI.Theme.FontBold, TextSize = 14, TextColor3 = Netro65UI.Theme.Error, BackgroundTransparency = 1, Size = UDim2.new(0, 30, 0, 30), Position = UDim2.new(1, -30, 0, 0), Name = "CloseBtn"})
     })
-    
+
+    -- Input Box
     local InputBox = Utility:Create("TextBox", {
         Parent = KeyFrame, BackgroundColor3 = Netro65UI.Theme.Secondary,
-        Size = UDim2.new(0.85, 0, 0, 38), Position = UDim2.new(0.075, 0, 0, 75),
+        Size = UDim2.new(0.85, 0, 0, 40), Position = UDim2.new(0.075, 0, 0, 80),
         Font = Netro65UI.Theme.FontMain, TextSize = 14, TextColor3 = Netro65UI.Theme.Text,
-        PlaceholderText = "Enter Key Here...", PlaceholderColor3 = Netro65UI.Theme.TextDark,
-        Text = "", ClearTextOnFocus = false
+        PlaceholderText = "Paste Key Here...", PlaceholderColor3 = Netro65UI.Theme.TextDark,
+        Text = "", ClearTextOnFocus = false, TextWrapped = true
     }, {
         Utility:Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
         Utility:Create("UIStroke", {Color = Netro65UI.Theme.Outline, Thickness = 1})
     })
 
-    -- Buttons Container
-    local BtnContainer = Utility:Create("Frame", {Parent = KeyFrame, BackgroundTransparency = 1, Size = UDim2.new(0.85, 0, 0, 35), Position = UDim2.new(0.075, 0, 0, 130)})
+    -- Buttons
+    local BtnContainer = Utility:Create("Frame", {Parent = KeyFrame, BackgroundTransparency = 1, Size = UDim2.new(0.85, 0, 0, 35), Position = UDim2.new(0.075, 0, 0, 140)})
     
     local ConfirmBtn = Utility:Create("TextButton", {
-        Parent = BtnContainer, Text = "Confirm", Font = Netro65UI.Theme.FontBold, TextSize = 13, 
-        TextColor3 = Netro65UI.Theme.Text, BackgroundColor3 = Netro65UI.Theme.Accent, 
+        Parent = BtnContainer, Text = "Verify Key", Font = Netro65UI.Theme.FontBold, TextSize = 13, 
+        TextColor3 = Netro65UI.Theme.Main, BackgroundColor3 = Netro65UI.Theme.Success, 
         Size = UDim2.new(0.48, 0, 1, 0), Position = UDim2.new(0, 0, 0, 0), AutoButtonColor = false
     }, {Utility:Create("UICorner", {CornerRadius = UDim.new(0, 6)})})
 
     local GetKeyBtn = Utility:Create("TextButton", {
-        Parent = BtnContainer, Text = "Get Key", Font = Netro65UI.Theme.FontBold, TextSize = 13, 
+        Parent = BtnContainer, Text = "Get Key Link", Font = Netro65UI.Theme.FontBold, TextSize = 13, 
         TextColor3 = Netro65UI.Theme.Text, BackgroundColor3 = Netro65UI.Theme.Secondary, 
         Size = UDim2.new(0.48, 0, 1, 0), Position = UDim2.new(0.52, 0, 0, 0), AutoButtonColor = false
     }, {Utility:Create("UICorner", {CornerRadius = UDim.new(0, 6)}), Utility:Create("UIStroke", {Color = Netro65UI.Theme.Outline, Thickness = 1})})
@@ -343,24 +328,22 @@ function Netro65UI:LoadKeySystem(props)
     Utility:MakeDraggable(KeyFrame)
     Acrylic:Enable()
 
-    -- Close Logic
+    -- Events
     KeyFrame.CloseBtn.MouseButton1Click:Connect(function()
         Acrylic:Disable()
         KeyFrame:Destroy()
     end)
 
-    -- Get Key Logic
     GetKeyBtn.MouseButton1Click:Connect(function()
         Utility:Ripple(GetKeyBtn)
         if setclipboard then
             setclipboard(KeySettings.GetKeyLink)
-            Netro65UI:Notify({Title = "Link Copied", Content = "Key link copied to clipboard!", Type = "Success"})
+            Netro65UI:Notify({Title = "Copied", Content = "Key link copied to clipboard!", Type = "Success"})
         else
-            Netro65UI:Notify({Title = "Error", Content = "Your executor doesn't support clipboard.", Type = "Error"})
+            Netro65UI:Notify({Title = "Error", Content = "Your executor doesn't support setclipboard.", Type = "Error"})
         end
     end)
 
-    -- Verification Logic
     ConfirmBtn.MouseButton1Click:Connect(function()
         Utility:Ripple(ConfirmBtn)
         local inputKey = InputBox.Text
@@ -370,42 +353,83 @@ function Netro65UI:LoadKeySystem(props)
         
         local success, response = pcall(function() return game:HttpGet(KeySettings.KeyURL) end)
         if not success then
-            Netro65UI:Notify({Title = "Error", Content = "Failed to fetch keys.", Type = "Error"})
-            ConfirmBtn.Text = "Confirm"
+            Netro65UI:Notify({Title = "Connection Error", Content = "Failed to fetch valid keys.", Type = "Error"})
+            ConfirmBtn.Text = "Verify Key"
             return
         end
 
-        local isValid = false
-        local rawKeys = response
-
-        if rawKeys:match("^%s*%[") then
-            local jsSuccess, jsTable = pcall(function() return HttpService:JSONDecode(rawKeys) end)
-            if jsSuccess then
-                for _, key in pairs(jsTable) do
-                    if tostring(key) == inputKey then isValid = true break end
-                end
-            end
-        else
-            inputKey = inputKey:gsub("^%s*(.-)%s*$", "%1")
-            for k in rawKeys:gmatch("[^,\n\r]+") do
-                local cleanK = k:gsub("^%s*(.-)%s*$", "%1")
-                if cleanK == inputKey then
-                    isValid = true
-                    break
-                end
-            end
-        end
+        local isValid = CheckIDInList(response, inputKey) -- Reusing check function logic for keys
 
         if isValid then
-            Netro65UI:Notify({Title = "Success", Content = "Key Verified!", Type = "Success"})
+            Netro65UI:Notify({Title = "Success", Content = "Key Verified! Loading UI...", Type = "Success"})
             Utility:Tween(KeyFrame, {0.3}, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1})
             task.wait(0.3)
+            Acrylic:Disable()
             KeyFrame:Destroy()
             KeySettings.Callback()
         else
-            Netro65UI:Notify({Title = "Failed", Content = "Invalid Key entered.", Type = "Error"})
-            ConfirmBtn.Text = "Confirm"
+            Netro65UI:Notify({Title = "Invalid", Content = "The key you entered is incorrect.", Type = "Error"})
+            ConfirmBtn.Text = "Verify Key"
             InputBox.Text = ""
+        end
+    end)
+end
+
+--// ------------------------------
+--// SYSTEM LOADER (VIP + KEY CHECK)
+--// ------------------------------
+
+function Netro65UI:Load(config)
+    --[[
+        Config Structure:
+        {
+            VIPUrl = "https://raw.github.../vip.json", (Optional)
+            KeySystem = true/false,
+            KeySettings = {
+                KeyURL = "...",
+                KeyLink = "...",
+                Title = "..."
+            },
+            OnLoad = function() ... end (Required: This is where you put your Window creation)
+        }
+    ]]
+    
+    local vipUrl = config.VIPUrl
+    local useKeySystem = config.KeySystem
+    local finalCallback = config.OnLoad or function() warn("No OnLoad callback provided!") end
+
+    -- Indikator Loading awal
+    Netro65UI:Notify({Title = "System", Content = "Checking access...", Duration = 2})
+
+    spawn(function()
+        local isUserVIP = false
+
+        -- 1. Check VIP jika URL disediakan
+        if vipUrl then
+            local success, res = pcall(function() return game:HttpGet(vipUrl) end)
+            if success then
+                isUserVIP = CheckIDInList(res, LocalPlayer.UserId)
+            else
+                warn("Failed to fetch VIP List")
+            end
+        end
+
+        Netro65UI.IsVIP = isUserVIP
+
+        if isUserVIP then
+            -- 2. Jika VIP, Bypass Key System
+            Netro65UI:Notify({Title = "VIP Access", Content = "Welcome back, VIP User!", Type = "Success", Duration = 5})
+            finalCallback()
+        else
+            -- 3. Jika Bukan VIP, Cek apakah Key System aktif
+            if useKeySystem then
+                Netro65UI:Notify({Title = "Access Required", Content = "You are not VIP. Key System required.", Type = "Warning"})
+                wait(1)
+                Netro65UI:TriggerKeySystem(config.KeySettings, finalCallback)
+            else
+                -- Jika tidak ada key system dan bukan VIP, load saja (Free version)
+                finalCallback()
+            end
         end
     end)
 end
