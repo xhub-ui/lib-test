@@ -2578,7 +2578,7 @@ function Netro65UI:CreateWindow(props)
     
     ConfigSection:AddDropdown({
         Name = "Load Config", 
-        Items = Netro65UI:GetConfigs(UniversalConfig), 
+        Items = Netro65UI:GetConfig(UniversalConfig), 
         Callback = function(v) 
             ConfigName = v
             Netro65UI:LoadConfig(v, UniversalConfig) 
