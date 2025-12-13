@@ -1,7 +1,7 @@
 --[[
     NetroUI - UI Library 
-    Status: (v5.3.1 Revised Compact)
-    Updates: Optimized Dimensions, Compact Window, Hybrid Layout System, Fixed Player Info
+    Status: (v5.3.2)
+    Updates: Refined Dimensions (440x300), Balanced Layout, Compact Player Info
 ]]
 
 local Netro65UI = {}
@@ -11,7 +11,7 @@ Netro65UI.ThemeObjects = {}
 Netro65UI.Keybinds = {}
 Netro65UI.ConfigFolder = "Netro65UI_Configs"
 Netro65UI.CurrentConfigFile = "default.json"
-Netro65UI.Version = "5.3.1" 
+Netro65UI.Version = "5.3.2" 
 Netro65UI.IsVIP = false
 
 --// Services
@@ -1430,8 +1430,8 @@ function Netro65UI:CreateWindow(props)
     props = props or {}
     
     --// COMPACT DIMENSIONS UPDATE //
-    local windowWidth = props.Width or 460 -- Reduced from 500 for compact look
-    local windowHeight = props.Height or 320 -- Reduced from 350 for compact look
+    local windowWidth = props.Width or 440 -- Adjusted to 440 for compact fit
+    local windowHeight = props.Height or 300 -- Adjusted to 300 for balanced height
     local titleText = props.Title or "Netro65UI"
     
     local marketingData = props.Marketing or {}
@@ -1449,7 +1449,7 @@ function Netro65UI:CreateWindow(props)
     
     Acrylic:Enable()
     
-    Netro65UI:CreateWatermark("NetroUI V5.3.1 | " .. LocalPlayer.Name)
+    Netro65UI:CreateWatermark("NetroUI V5.3.2 | " .. LocalPlayer.Name)
 
     --// MAIN WINDOW FRAME //
     local MainFrame = Utility:Create("Frame", {
@@ -1671,7 +1671,7 @@ function Netro65UI:CreateWindow(props)
         ClipsDescendants = true
     })
     
-    local NavWidth = 125 -- Reduced from 140 for compact look
+    local NavWidth = 115 -- Slightly reduced to give more content space
     local NavContainer = Utility:Create("ScrollingFrame", {
         Name = "Navigation", 
         Parent = ContentContainer, 
@@ -2854,7 +2854,7 @@ function Netro65UI:CreateWindow(props)
         -- [BAGIAN 1] Profile Card
         local ProfileCard = Utility:Create("Frame", {
             Parent = PlayerContainer,
-            Size = UDim2.new(1, 0, 0, 85),
+            Size = UDim2.new(1, 0, 0, 75), -- Compact Height
             BackgroundColor3 = Netro65UI.Theme.Secondary,
             BackgroundTransparency = 0.2,
             LayoutOrder = 1
@@ -2948,7 +2948,7 @@ function Netro65UI:CreateWindow(props)
         -- [BAGIAN 2] Stats Row
         local StatsRow = Utility:Create("Frame", {
             Parent = PlayerContainer,
-            Size = UDim2.new(1, 0, 0, 55),
+            Size = UDim2.new(1, 0, 0, 50), -- Compact Height
             BackgroundTransparency = 1,
             LayoutOrder = 2
         }, {
@@ -3039,7 +3039,7 @@ function Netro65UI:CreateWindow(props)
         -- [BAGIAN 3] Marketing Card
         local MarketingCard = Utility:Create("Frame", {
             Parent = PlayerContainer,
-            Size = UDim2.new(1, 0, 0, 100), -- Reduced height slightly for compact fit
+            Size = UDim2.new(1, 0, 0, 85), -- Compact Height
             BackgroundColor3 = Netro65UI.Theme.Secondary,
             BackgroundTransparency = 0.2,
             LayoutOrder = 3
@@ -3076,13 +3076,13 @@ function Netro65UI:CreateWindow(props)
 
         Utility:Create("TextLabel", {
             Parent = MarketingCard,
-            Size = UDim2.new(1, -20, 0, 40),
+            Size = UDim2.new(1, -20, 0, 30),
             Position = UDim2.new(0, 10, 0, 35),
             BackgroundTransparency = 1,
-            Text = "Get exclusive access to premium scripts, faster updates, and priority support. Upgrade now to dominate the game!",
+            Text = "Get exclusive access to premium scripts, faster updates, and priority support.",
             TextColor3 = Color3.fromRGB(200, 200, 200),
             Font = Netro65UI.Theme.FontMain,
-            TextSize = 11,
+            TextSize = 10,
             TextWrapped = true,
             TextXAlignment = Enum.TextXAlignment.Left,
             TextYAlignment = Enum.TextYAlignment.Top
@@ -3090,8 +3090,8 @@ function Netro65UI:CreateWindow(props)
 
         local UpgradeBtn = Utility:Create("TextButton", {
             Parent = MarketingCard,
-            Size = UDim2.new(1, -20, 0, 30),
-            Position = UDim2.new(0, 10, 1, -40),
+            Size = UDim2.new(1, -20, 0, 25),
+            Position = UDim2.new(0, 10, 1, -30),
             BackgroundColor3 = Netro65UI.Theme.Accent,
             Text = finalUpgradeText, 
             TextColor3 = Color3.new(1,1,1),
